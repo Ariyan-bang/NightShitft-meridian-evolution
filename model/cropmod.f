@@ -10,6 +10,12 @@ C  Reads  : MERIDIAN.DAT   (fixed width deck, see DECKFMT.txt)
 C  Writes : MERIDIAN.OUT   (fixed width, see OUTFMT.txt)
 C=======================================================================
       PROGRAM CROPMOD
+C-----Optional run switches and the optional soil-nitrogen balance.
+C     Both default OFF: OPT_NBAL is .false. unless MERIDIAN_NBAL is set
+C     in the environment, so the operational forecast never enters the
+C     nitrogen path and MERIDIAN.OUT is the historical file unchanged.
+      USE RUNOPTS, ONLY: OPT_NBAL
+      USE NBAL,    ONLY: NBALANCE
       IMPLICIT NONE
 
       INTEGER MAXDAY
@@ -76,6 +82,16 @@ C     is NOT checked (see ticket MRD-118).
    30 CONTINUE
       WRITE (20, 913) YIELD
       CLOSE (20)
+
+C-----Optional soil-nitrogen balance (MRD-230).  Runs ONLY when the
+C     MERIDIAN_NBAL switch is set; MERIDIAN.OUT has already been written
+C     and closed above, and NBALANCE writes only its own diagnostic
+C     files (MERIDIAN.NUT, and MERIDIAN.TRC when tracing).  The default
+C     forecast skips this block entirely, so its output is unchanged.
+      IF (OPT_NBAL()) THEN
+         CALL NBALANCE (NDAYS, IDOY, TMAX, TMIN, RAIN, SRAD, XLAT,
+     &                  AWC, RDEPTH, SW, ET, DRAIN, BIOM)
+      END IF
 
       WRITE (*,*) 'CROPMOD: ok, ', NDAYS, ' days'
       STOP
