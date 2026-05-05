@@ -6,11 +6,17 @@ LDLIBS  = -lm
 COMMON  = src/packet.o src/tsstore.o src/decode.o src/validate.o \
           src/registry.o src/spool.o src/stats.o
 
-# Per-tool entry points.
-INGEST_OBJ = src/mrd_ingest.o $(COMMON)
-REPLAY_OBJ = src/mrd_replay.o $(COMMON)
+# MRD2 (2026) frame support objects, used by the framedump tool.  These
+# are additive and link into no existing target; the collector and
+# replay tools are byte-for-byte unchanged.
+MRD2    = src/packet2.o src/decode2.o
 
-BINS    = mrd_ingest mrd_replay
+# Per-tool entry points.
+INGEST_OBJ   = src/mrd_ingest.o $(COMMON)
+REPLAY_OBJ   = src/mrd_replay.o $(COMMON)
+FRAMEDUMP_OBJ = src/mrd_framedump.o src/packet.o src/decode.o $(MRD2)
+
+BINS    = mrd_ingest mrd_replay mrd_framedump
 
 all: $(BINS)
 
@@ -19,6 +25,9 @@ mrd_ingest: $(INGEST_OBJ)
 
 mrd_replay: $(REPLAY_OBJ)
 	$(CC) $(CFLAGS) -o $@ $(REPLAY_OBJ) $(LDLIBS)
+
+mrd_framedump: $(FRAMEDUMP_OBJ)
+	$(CC) $(CFLAGS) -o $@ $(FRAMEDUMP_OBJ) $(LDLIBS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -35,6 +44,12 @@ src/stats.o:     src/stats.c    src/stats.h    src/decode.h src/validate.h src/r
 src/mrd_ingest.o: src/mrd_ingest.c src/packet.h src/tsstore.h src/spool.h \
                   src/decode.h src/validate.h src/registry.h src/stats.h
 src/mrd_replay.o: src/mrd_replay.c src/packet.h src/registry.h src/stats.h
+
+# MRD2 frame support and the framedump tool (additive, 2026).
+src/packet2.o:   src/packet2.c  src/packet2.h  src/packet.h
+src/decode2.o:   src/decode2.c  src/decode2.h  src/packet2.h src/packet.h
+src/mrd_framedump.o: src/mrd_framedump.c src/packet.h src/packet2.h \
+                     src/decode.h src/decode2.h
 
 test: all
 	sh test/test_ingest.sh
