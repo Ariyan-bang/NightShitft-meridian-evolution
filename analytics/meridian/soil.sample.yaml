@@ -1,0 +1,26 @@
+# Sample soil-parameter config for the opt-in soilconf loader (MRD-91).
+#
+# This file reproduces the hard-coded SOIL / LATITUDE registries in
+# deck.py one-for-one.  It is NOT read by the default run path: the
+# nightly forecast still uses deck.py's constants and is unchanged.  A
+# caller that wants file-driven parameters loads this with
+# soilconf.load_file(path) and passes the registry to
+# soilconf.spec_from_readings_with(...).
+#
+#   awc               available water capacity, a fraction in (0, 1)
+#   rooting_depth_mm  rooting depth in MILLIMETRES (not cm; see DECKFMT)
+#   latitude          optional; omit to keep deck.py's value for the station
+#
+# Station ids are the A8 fixed-width deck field, so <= 8 characters.
+
+stations:
+  GUELPH:   {awc: 0.150, rooting_depth_mm: 1100.0, latitude: 43.545}
+  KITCHNER: {awc: 0.142, rooting_depth_mm: 1050.0, latitude: 43.451}
+  WATERLOO: {awc: 0.138, rooting_depth_mm: 1000.0, latitude: 43.466}
+  CAMBRIDG: {awc: 0.155, rooting_depth_mm: 1200.0, latitude: 43.360}
+  MILTON:   {awc: 0.148, rooting_depth_mm: 950.0,  latitude: 43.509}
+  BRANTFRD: {awc: 0.162, rooting_depth_mm: 900.0,  latitude: 43.139}
+
+# Fallback for any station not listed above.  Matches deck.DEFAULT_SOIL
+# and deck.DEFAULT_LAT.
+defaults: {awc: 0.145, rooting_depth_mm: 1000.0, latitude: 43.545}
