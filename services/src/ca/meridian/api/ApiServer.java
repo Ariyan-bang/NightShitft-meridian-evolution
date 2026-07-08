@@ -2,6 +2,11 @@ package ca.meridian.api;
 
 import ca.meridian.db.Db;
 import ca.meridian.db.DbClient;
+import ca.meridian.db.ForecastCache;
+import ca.meridian.api.v2.Dispatcher;
+import ca.meridian.api.v2.ExportV2;
+import ca.meridian.api.v2.ForecastV2;
+import ca.meridian.api.v2.StationsV2;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
@@ -61,6 +66,21 @@ public final class ApiServer {
         router.add("/api/anomalies", "flagged suspect readings", new AnomaliesHandler(client));
         router.add("/api/export", "CSV export of a table", new ExportHandler(client));
         router.add("/api/metrics", "in-process request counters", new MetricsHandler());
+
+        // --- v2 surface (2026 versioning work). These do NOT get their own
+        // contexts; one /api/v2 context is wired here and the annotation
+        // dispatcher routes within it. The per-station forecast summary is
+        // cached (v2 path only); the original routes above are untouched. ---
+        ForecastCache forecastCache = new ForecastCache(client);
+        Dispatcher v2 = Dispatcher.of(
+                new ForecastV2(client, forecastCache),
+                new StationsV2(client),
+                new ExportV2(client));
+        router.add("/api/v2", "versioned endpoints (annotation-routed)", v2);
+        router.note("/api/v2/forecast", "paginated forecasts with a cached station summary");
+        router.note("/api/v2/stations", "stations with coverage and site metadata");
+        router.note("/api/v2/export", "CSV or JSON export of a table");
+
         router.add("/api", "this route index", new RootHandler(router.routes()));
 
         server.setExecutor(Executors.newFixedThreadPool(8));

@@ -28,6 +28,9 @@ public final class Env {
     /** Property holding the station cache TTL in seconds. */
     public static final String CACHE_TTL = "meridian.cache.ttl";
 
+    /** Property holding the v2 forecast-summary cache TTL in seconds. */
+    public static final String V2_CACHE_TTL = "meridian.v2.cache.ttl";
+
     private Env() {
     }
 
@@ -49,6 +52,10 @@ public final class Env {
 
     public static int cacheTtlSeconds() {
         return intProp(CACHE_TTL, 60);
+    }
+
+    public static int v2CacheTtlSeconds() {
+        return intProp(V2_CACHE_TTL, 300);
     }
 
     public static String prop(String key, String dflt) {
