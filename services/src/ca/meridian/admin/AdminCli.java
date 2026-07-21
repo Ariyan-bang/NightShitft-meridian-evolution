@@ -2,6 +2,7 @@ package ca.meridian.admin;
 
 import ca.meridian.db.Db;
 import ca.meridian.db.DbClient;
+import ca.meridian.db.ForecastCache;
 import ca.meridian.db.QueryBuilder;
 import ca.meridian.db.ResultSetLite;
 import ca.meridian.db.Row;
@@ -24,8 +25,9 @@ import java.util.List;
  *   java -Dmeridian.db=data/meridian.db ca.meridian.admin.AdminCli stations
  *   java -Dmeridian.db=data/meridian.db ca.meridian.admin.AdminCli coverage GUELPH
  *   java -Dmeridian.db=data/meridian.db ca.meridian.admin.AdminCli suspect GUELPH 2025
+ *   java -Dmeridian.db=data/meridian.db ca.meridian.admin.AdminCli evict GUELPH 2025
  *
- * D. Iqbal 2021
+ * D. Iqbal 2021, extended R. Osei 2026
  */
 public final class AdminCli {
 
@@ -59,6 +61,13 @@ public final class AdminCli {
                 }
                 cli.suspect(Strings.normStation(args[1]), Integer.parseInt(args[2]));
                 break;
+            case "evict":
+                if (args.length < 3) {
+                    System.err.println("usage: evict <station> <year>");
+                    System.exit(2);
+                }
+                cli.evict(Strings.normStation(args[1]), Integer.parseInt(args[2]));
+                break;
             case "help":
             default:
                 usage();
@@ -70,6 +79,7 @@ public final class AdminCli {
         System.out.println("  stations            list stations and record counts");
         System.out.println("  coverage <stn>      per-year day counts for a station");
         System.out.println("  suspect <stn> <yr>  count flagged readings");
+        System.out.println("  evict <stn> <yr>    drop the v2 cached summary after a backfill");
     }
 
     void stations() throws IOException {
@@ -115,6 +125,21 @@ public final class AdminCli {
         ResultSetLite rs = db.query(sql);
         int n = rs.isEmpty() ? 0 : rs.first().intVal("n");
         System.out.println(station + " " + year + ": " + n + " flagged reading(s)");
+    }
+
+    /**
+     * Drops the v2 forecast-summary cache entry for a station after a
+     * manual backfill has written a new run for that year, so the v2
+     * endpoint reflects it without waiting out the TTL.
+     */
+    void evict(String station, int year) throws IOException {
+        ForecastCache cache = new ForecastCache(db);
+        // Warm the entry first so there is something to drop, mirroring
+        // what the running service would hold after a read.
+        cache.summary(station);
+        cache.invalidate(station, year);
+        System.out.println("evicted v2 summary for " + station + " " + year
+                + " (entries now " + cache.size() + ")");
     }
 
     /** A crude sparkline; 366 days maps to roughly one bar per week. */
