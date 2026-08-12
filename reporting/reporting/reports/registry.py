@@ -22,12 +22,14 @@ from .coverage import CoverageReport
 from .daily_detail import DailyDetailReport
 from .season_summary import SeasonSummaryReport
 from .station_report import StationReport
+from .trend import TrendReport
 
 # Ordered so `--help` and the usage banner list them in a sensible
 # reading order (province-wide first, then station, then quality).
 _REPORTS: List[Type[BaseReport]] = [
     SeasonSummaryReport,
     StationReport,
+    TrendReport,
     DailyDetailReport,
     AnomalyReport,
     CoverageReport,

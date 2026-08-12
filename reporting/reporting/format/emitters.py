@@ -22,7 +22,8 @@ from __future__ import annotations
 
 import csv
 import io
-from typing import List, Optional, Sequence
+import json
+from typing import Any, Dict, List, Optional, Sequence
 
 from .columns import ColumnSet
 from .layout import BodyLine, PageContext, Paginator
@@ -175,6 +176,80 @@ def _csv_cell(value) -> str:
     """
     if value is None:
         return ""
+    return str(value)
+
+
+# --- JSON -----------------------------------------------------------------
+def emit_json(doc: ReportDocument, *, indent: Optional[int] = 2) -> str:
+    """Render the report's tables as a machine-readable JSON document.
+
+    A sibling of the CSV emitter, for callers that want the numbers
+    structured rather than a flat sheet: the nightly batch feeds this
+    into the ministry's data warehouse, which wants typed values and the
+    column metadata, not a fixed-width printout.  Like CSV it is
+    explicitly NOT fixed-format -- the banner, pagination and section
+    rules are dropped and only the structured tables survive.
+
+    Shape::
+
+        {
+          "report": {"title": ..., "reference": ...},
+          "tables": [
+            {
+              "heading": "...",
+              "columns": [{"key","title","unit","kind"}, ...],
+              "rows": [{<key>: <typed value>, ...}, ...]
+            }, ...
+          ]
+        }
+
+    Values are emitted at full precision (``None`` -> JSON ``null``); the
+    fixed-format rounding is a print concern and is not applied here.  The
+    output is 7-bit ASCII (``ensure_ascii``) so it travels the same line
+    as the plaintext reports do.
+    """
+    tables: List[Dict[str, Any]] = []
+    for block in doc.blocks:
+        if block.columns is None:
+            continue
+        cs = block.columns
+        columns = [
+            {
+                "key": c.key,
+                "title": c.title.strip(),
+                "unit": c.unit,
+                "kind": c.kind,
+            }
+            for c in cs.columns
+        ]
+        rows = [
+            {c.key: _json_cell(row.get(c.key)) for c in cs.columns}
+            for row in block.rows
+        ]
+        tables.append(
+            {"heading": block.heading, "columns": columns, "rows": rows}
+        )
+
+    payload: Dict[str, Any] = {
+        "report": {
+            "title": doc.running_title,
+            "reference": doc.ref_code,
+        },
+        "tables": tables,
+    }
+    return json.dumps(payload, ensure_ascii=True, indent=indent) + "\n"
+
+
+def _json_cell(value):
+    """Coerce a raw cell value to a JSON-friendly scalar.
+
+    Numbers and None pass straight through (so a reader gets a real
+    number / null, not a string); anything else is stringified, matching
+    the CSV emitter's "the spreadsheet does its own typing" stance for
+    labels and flag strings.
+    """
+    if value is None or isinstance(value, (int, float, bool)):
+        return value
     return str(value)
 
 

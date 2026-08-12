@@ -128,6 +128,7 @@ REPORT_CODES = {
     "daily": "DALY",
     "anomaly": "ANOM",
     "coverage": "COVR",
+    "trend": "TRND",
 }
 
 # Fortran-style overflow marker.  When a numeric field will not fit its

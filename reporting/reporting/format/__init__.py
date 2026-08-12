@@ -20,7 +20,14 @@ from __future__ import annotations
 
 from .banner import build_banner, build_section_head
 from .columns import Column, ColumnSet, center_block
-from .emitters import Block, ReportDocument, emit_csv, emit_text, write_output
+from .emitters import (
+    Block,
+    ReportDocument,
+    emit_csv,
+    emit_json,
+    emit_text,
+    write_output,
+)
 
 __all__ = [
     "Column",
@@ -30,6 +37,7 @@ __all__ = [
     "ReportDocument",
     "emit_text",
     "emit_csv",
+    "emit_json",
     "write_output",
     "build_banner",
     "build_section_head",

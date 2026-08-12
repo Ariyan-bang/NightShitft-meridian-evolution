@@ -26,7 +26,8 @@ SUPPORTED_WIDTHS = (WIDTH_NARROW, WIDTH_WIDE)
 # Emitter formats.
 FMT_TEXT = "text"
 FMT_CSV = "csv"
-SUPPORTED_FORMATS = (FMT_TEXT, FMT_CSV)
+FMT_JSON = "json"
+SUPPORTED_FORMATS = (FMT_TEXT, FMT_CSV, FMT_JSON)
 
 # Default database path.  In production this is a symlink the collector
 # and analytics both write through; for reports it is opened read-only.

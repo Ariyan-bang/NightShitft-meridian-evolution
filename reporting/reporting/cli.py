@@ -28,6 +28,7 @@ from typing import List, Optional
 
 from .config import (
     FMT_CSV,
+    FMT_JSON,
     FMT_TEXT,
     SUPPORTED_FORMATS,
     SUPPORTED_WIDTHS,
@@ -96,9 +97,10 @@ def build_parser() -> argparse.ArgumentParser:
         dest="fmt",
         default=FMT_TEXT,
         choices=SUPPORTED_FORMATS,
-        help="output format: '%s' (fixed-format printout) or '%s' "
-        "(spreadsheet import, not fixed-format); default '%s'"
-        % (FMT_TEXT, FMT_CSV, FMT_TEXT),
+        help="output format: '%s' (fixed-format printout), '%s' "
+        "(spreadsheet import) or '%s' (machine-readable export); the last "
+        "two are not fixed-format; default '%s'"
+        % (FMT_TEXT, FMT_CSV, FMT_JSON, FMT_TEXT),
     )
     p.add_argument(
         "-o",
@@ -143,6 +145,8 @@ def _examples_help() -> str:
             "  %s season --year 2021 --db meridian.sqlite" % PROG,
             "  %s station --station GUELPH --width 132" % PROG,
             "  %s daily -s WATERLOO -y 2021 -w 132 -o waterloo2021.txt" % PROG,
+            "  %s trend --station GUELPH --width 132" % PROG,
+            "  %s trend --format json -o trend.json" % PROG,
             "  %s anomaly --year 2021" % PROG,
             "  %s coverage --format csv" % PROG,
         ]

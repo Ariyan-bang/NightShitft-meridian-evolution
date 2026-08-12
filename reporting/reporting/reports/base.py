@@ -19,7 +19,7 @@ from __future__ import annotations
 import datetime as _dt
 from typing import List, Optional
 
-from ..config import FMT_CSV, ReportConfig
+from ..config import FMT_CSV, FMT_JSON, ReportConfig
 from ..constants import REPORT_CODES
 from ..db import ReportDB
 from ..format import (
@@ -27,6 +27,7 @@ from ..format import (
     ReportDocument,
     build_banner,
     emit_csv,
+    emit_json,
     emit_text,
 )
 
@@ -111,6 +112,8 @@ class BaseReport:
         doc = self.build_document()
         if self.config.fmt == FMT_CSV:
             return emit_csv(doc)
+        if self.config.fmt == FMT_JSON:
+            return emit_json(doc)
         return emit_text(doc, paginate=self.config.paginate)
 
     # -- helpers subclasses lean on ---------------------------------------
