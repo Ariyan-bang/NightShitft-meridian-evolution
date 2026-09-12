@@ -1,9 +1,10 @@
 // src/components/NavSidebar.tsx
-// J. Ferreira, 2023-08 — the left rail. Shows all 11 screens; marks the 8 stubs.
+// J. Ferreira, 2023-08 — the left rail. Shows all 11 screens; marks the stubs.
 //
-// The "3 / 11" pill and the stall date are wired straight to roadmap.ts, not
-// typed in here, so they cannot drift from the ledger. If the migration ever
-// resumes and a fourth screen lands, this rail updates itself.
+// The progress pill and the stall date are wired straight to roadmap.ts, not
+// typed in here, so they cannot drift from the ledger. The 2026 evolution
+// landed the fourth and fifth screens and this rail updated itself — the stub
+// marks fell off Anomalies and Compare with no change here.
 
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../config/nav';
