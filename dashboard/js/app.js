@@ -21,7 +21,7 @@ window.Meridian = window.Meridian || {};
     var State = window.Meridian.State;
 
     /* tab order in the bar. IDs must match view.id. */
-    var ORDER = ['stations', 'forecast', 'anomalies', 'compare', 'quality', 'about'];
+    var ORDER = ['stations', 'forecast', 'anomalies', 'compare', 'trends', 'quality', 'about'];
 
     var current = null;         /* currently-mounted view object */
     var $content = null;
@@ -29,7 +29,7 @@ window.Meridian = window.Meridian || {};
 
     function viewFor(id) {
         var V = window.Meridian.Views || {};
-        var names = ['Stations', 'Forecast', 'Anomalies', 'Compare', 'Quality', 'About'];
+        var names = ['Stations', 'Forecast', 'Anomalies', 'Compare', 'Trends', 'Quality', 'About'];
         for (var i = 0; i < names.length; i++) {
             if (V[names[i]] && V[names[i]].id === id) { return V[names[i]]; }
         }
