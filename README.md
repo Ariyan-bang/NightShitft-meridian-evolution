@@ -33,3 +33,22 @@ See `services/src/main/resources/quartz.properties`.
 
 ---
 *Last updated 2015-11-04.*
+
+## Continued evolution (2026)
+
+The system has kept moving since the archaeology snapshot. Recent, still-settling work:
+
+- model: an optional soil-nitrogen balance (run switch `MERIDIAN_NBAL`), plus a self-contained
+  mineralisation kernel put forward as the port target for MRD-231, with a trace hook
+  (`MERIDIAN_TRACE`) meant to seed a validation fixture. Off by default.
+- ingest: a second telemetry frame format, "MRD2" (two extra channels), alongside MRD1, and a
+  `mrd_framedump` debug tool. The field spool is still MRD1.
+- analytics: an opt-in `--parallel` orchestrator and an external soil-parameter config loader,
+  neither on the nightly path yet.
+- services: a versioned `/api/v2` surface (pagination, export, a station summary cache) routed by a
+  newer annotation dispatcher beside the original Router.
+- reporting: a `trend` report and a JSON export, plus a centralised run-selection module.
+- ui-next: Anomalies and Compare screens landed (5 of 11), with a forecast client of their own.
+
+Not everything here is finished, consistent, or correct. Treat the docs as a starting point and
+confirm behaviour against the running system.
