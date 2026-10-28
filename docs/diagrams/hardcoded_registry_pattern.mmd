@@ -62,4 +62,4 @@ classDiagram
     SoilRegistry *-- SoilParams : contains
     SoilRegistry ..> SoilSampleYAML : parses
     SoilConfModule ..> SoilRegistry : uses
-    Orchestrator -.-> SoilConfModule : MISSING LINK (Never called)
+    Orchestrator ..> SoilConfModule : MISSING LINK (Never called)
