@@ -1,0 +1,97 @@
+@startuml facade_pattern
+skinparam style strictuml
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam roundcorner 8
+
+title Genuine Design Pattern: Facade Pattern (ExportBridge)
+
+package "Reporting Subsystem (External Client)" #E8F4F8 {
+    class ReportingClient {
+        + generate_annual_report()
+        + list_available_runs()
+    }
+}
+
+package "Analytics & Orchestration Subsystem" #FAFAFA {
+    package "Facade Layer" #E2F0D9 {
+        class ExportBridge <<Facade>> {
+            - store: Store
+            + __init__(store: Store)
+            + manifest(): List[Dict]
+            + for_station_year(stnid: str, year: int): ExportedForecast
+            + for_station(stnid: str): List[ExportedForecast]
+            + export_all(): List[ExportedForecast]
+        }
+    }
+
+    package "Data Transfer Objects (Versioned DTO)" #FFF2CC {
+        class ExportedForecast <<Value Object>> {
+            + format_version: str = "1.0"
+            + stnid: str
+            + year: int
+            + run_at: str
+            + model: str
+            + yield_t: float
+            + ndays: int
+            + summary: Dict
+            + daily: List[ExportedDaily]
+            + to_dict(): Dict
+        }
+
+        class ExportedDaily <<Value Object>> {
+            + doy: int
+            + sw: float
+            + et: float
+            + drain: float
+            + biom: float
+            + lai: float
+            + {static} from_row(r: DailyRow): ExportedDaily
+        }
+    }
+
+    package "Internal Subsystem (Hidden Behind Facade)" #FCE4D6 {
+        class Store {
+            - conn: sqlite3.Connection
+            + list_forecasts(): List[ForecastRow]
+            + get_forecast(stnid: str, year: int): Optional[ForecastRow]
+            + daily_rows(stnid: str, year: int): List[DailyRow]
+        }
+
+        class "aggregate module" as Aggregate <<Subsystem Module>> {
+            + summarize_stored(store: Store, stnid: str, year: int): SeasonSummary
+        }
+
+        class DailyRow <<Internal Result>> {
+            + doy: int
+            + sw: float
+            + et: float
+            + drain: float
+            + biom: float
+            + lai: float
+        }
+    }
+}
+
+' Relationships
+ReportingClient ..> ExportBridge : <<invokes>>
+ReportingClient ..> ExportedForecast : <<consumes>>
+
+ExportBridge o--> Store : wraps internal DB
+ExportBridge ..> Aggregate : invokes aggregation math
+ExportBridge ..> ExportedForecast : packages & returns
+ExportedForecast *--> ExportedDaily : contains
+
+Store ..> DailyRow : reads rows from SQLite
+Aggregate ..> Store : computes season stats
+
+note right of ExportBridge
+  **Facade Pattern Justification:**
+  Insulates the reporting subsystem from raw
+  SQLite queries and schema churn (forecast, forecast_daily).
+  Packages raw rows and aggregate calculations
+  into a versioned DTO (format_version 1.0).
+end note
+
+@enduml

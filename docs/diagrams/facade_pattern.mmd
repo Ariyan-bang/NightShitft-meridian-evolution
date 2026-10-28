@@ -1,0 +1,73 @@
+classDiagram
+    direction TB
+
+    class ReportingClient {
+        +generate_annual_report()
+        +list_available_runs()
+    }
+
+    class ExportBridge {
+        <<Facade>>
+        -Store store
+        +manifest() List~Dict~
+        +for_station_year(stnid, year) ExportedForecast
+        +for_station(stnid) List~ExportedForecast~
+        +export_all() List~ExportedForecast~
+    }
+
+    class ExportedForecast {
+        <<Value Object>>
+        +String format_version
+        +String stnid
+        +int year
+        +String run_at
+        +String model
+        +float yield_t
+        +int ndays
+        +Dict summary
+        +List~ExportedDaily~ daily
+        +to_dict() Dict
+    }
+
+    class ExportedDaily {
+        <<Value Object>>
+        +int doy
+        +float sw
+        +float et
+        +float drain
+        +float biom
+        +float lai
+        +from_row(DailyRow) ExportedDaily
+    }
+
+    class Store {
+        <<Internal DB>>
+        -sqlite3.Connection conn
+        +list_forecasts() List~ForecastRow~
+        +get_forecast(stnid, year) ForecastRow
+        +daily_rows(stnid, year) List~DailyRow~
+    }
+
+    class AggregateModule {
+        <<Subsystem Logic>>
+        +summarize_stored(store, stnid, year) SeasonSummary
+    }
+
+    class DailyRow {
+        <<Internal Result>>
+        +int doy
+        +float sw
+        +float et
+        +float drain
+        +float biom
+        +float lai
+    }
+
+    ReportingClient ..> ExportBridge : calls
+    ReportingClient ..> ExportedForecast : consumes
+    ExportBridge o-- Store : holds
+    ExportBridge ..> AggregateModule : calculates summaries
+    ExportBridge ..> ExportedForecast : creates & returns
+    ExportedForecast *-- ExportedDaily : contains
+    Store ..> DailyRow : reads
+    AggregateModule ..> Store : reads

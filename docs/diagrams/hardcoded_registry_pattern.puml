@@ -1,0 +1,89 @@
+@startuml hardcoded_registry_pattern
+skinparam style strictuml
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam roundcorner 8
+
+title Degenerate Pattern: Decayed / Hard-Coded Registry (deck.py vs soilconf.py)
+
+package "Nightly Production Pipeline (ACTIVE PATH - DECAYED)" #FCE4D6 {
+    class "run_forecast.py" as RunForecast <<CLI Entry>> {
+        + --db: str
+        + --station: str
+        + --year: int
+        + --parallel: flag
+        -- NO soil config flag --
+    }
+
+    class "orchestrator.py" as Orchestrator <<Module>> {
+        + build_spec(store: Store, stnid: str, year: int): ModelInputSpec
+        + run_station_year(...)
+        + run_all(...)
+    }
+
+    class "deck.py" as DeckModule <<Hard-Coded Registry>> {
+        + SOIL: Dict[str, Tuple[float, float]]
+        + LATITUDE: Dict[str, float]
+        + DEFAULT_SOIL: Tuple[float, float]
+        + DEFAULT_LAT: float
+        --
+        + soil_for(stnid: str): Tuple[float, float]
+        + latitude_for(stnid: str): float
+        + spec_from_readings(stnid, year, readings): ModelInputSpec
+    }
+}
+
+package "Orphaned Modern Registry (UNWIRED / DEAD PATH)" #E8F4F8 {
+    class SoilRegistry <<Registry>> {
+        + stations: Mapping[str, SoilParams]
+        + defaults: Optional[SoilParams]
+        --
+        + soil_for(stnid: str): SoilParams
+        + {static} from_yaml(path: str): SoilRegistry
+        + {static} from_ini(path: str): SoilRegistry
+    }
+
+    class SoilParams <<Value Object>> {
+        + awc: float
+        + rooting_depth_mm: float
+        + latitude: Optional[float]
+        + validate(stnid: str)
+    }
+
+    class "soilconf.py" as SoilConfModule <<Module>> {
+        + spec_from_readings_with(registry, stnid, year, readings)
+    }
+
+    file "soil.sample.yaml" as SoilYaml <<Config File>>
+}
+
+' Active Production Calls
+RunForecast ..> Orchestrator : executes batch
+Orchestrator ..> DeckModule : calls spec_from_readings()
+DeckModule ..> DeckModule : reads hard-coded SOIL dict
+
+' Orphaned Path
+SoilConfModule ..> SoilRegistry : defines & uses
+SoilRegistry *--> SoilParams : contains
+SoilRegistry ..> SoilYaml : parses YAML/INI
+
+' Missing Connection
+Orchestrator .[#red,thickness=2].x SoilConfModule : **NEVER CALLED IN PRODUCTION**\n(Orphaned Seam)
+
+note bottom of DeckModule #FFCCCC
+  **Degenerate Anti-Pattern:**
+  Temporary 2008 stopgap (MRD-91) decayed into
+  frozen hardcoded constants. Changing station soils
+  or adding new stations requires Python code edits
+  and redeployments.
+end note
+
+note bottom of SoilRegistry #D9E1F2
+  **Remedy / Recommendation:**
+  Remove hard-coded dicts in deck.py.
+  Wire SoilRegistry into orchestrator.build_spec()
+  and add --soil-config to run_forecast.py.
+end note
+
+@enduml
